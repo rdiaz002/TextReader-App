@@ -5,9 +5,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -18,23 +21,31 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TextReaderService extends Service implements TextToSpeech.OnInitListener {
 
-    TextToSpeech mTextToSpeech;
-    ConcurrentLinkedQueue<String> utteranceQueue;
+    private TextToSpeech mTextToSpeech;
+    private ConcurrentLinkedQueue<String> utteranceQueue;
     static boolean TEXTREADER_ACTIVE = false;
-    boolean HEADSET_PRESENT = false;
+    private boolean HEADSET_PRESENT = false;
+    private int MAX_LENGTH = 40;
     BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
             if (intent.getAction().compareTo(Telephony.Sms.Intents.SMS_RECEIVED_ACTION) == 0) {
                 SmsMessage[] msgs = Telephony.Sms.Intents.getMessagesFromIntent(intent);
-                String name = msgs[0].getDisplayOriginatingAddress();
-                String msg = msgs[0].getDisplayMessageBody();
+                String name = getContactName(msgs[0].getDisplayOriginatingAddress(), getApplicationContext());
 
+                //TODO: Load final word before max limit to complete statement.
+                String msg = msgs[0].getDisplayMessageBody();
+                if (msg.length() > MAX_LENGTH) {
+                    msg = msg.substring(0, MAX_LENGTH);
+                }
+
+                //Check for headset and make sure utterencekey is not at the top of the queue to avoid spamming.
                 if (HEADSET_PRESENT && (utteranceQueue.isEmpty() || utteranceQueue.peek().compareTo(name) != 0)) {
                     utteranceQueue.add(name);
-                    mTextToSpeech.speak(name + " said " + msg, TextToSpeech.QUEUE_ADD, null, name);
+                    mTextToSpeech.speak(name + " replied " + msg, TextToSpeech.QUEUE_ADD, null, name);
                 }
+
             } else if (intent.getAction().compareTo(AudioManager.ACTION_HEADSET_PLUG) == 0) {
                 checkForHeadPhones();
             }
@@ -42,6 +53,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
 
         }
     };
+
 
     public TextReaderService() {
 
@@ -99,6 +111,27 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         unregisterReceiver(mReceiver);
         TEXTREADER_ACTIVE = false;
         super.onDestroy();
+    }
+
+    private String getContactName(final String phoneNumber, Context context) {
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+
+        String[] projection = new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME};
+
+        String contactName = "";
+        Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                contactName = cursor.getString(0);
+            }
+            cursor.close();
+        }
+
+        if (contactName.isEmpty()) {
+            return phoneNumber;
+        }
+        return contactName;
     }
 
     public class UtteranceListener extends UtteranceProgressListener {
