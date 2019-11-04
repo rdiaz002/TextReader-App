@@ -25,7 +25,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
     private ConcurrentLinkedQueue<String> utteranceQueue;
     static boolean TEXTREADER_ACTIVE = false;
     private boolean HEADSET_PRESENT = false;
-    private int MAX_LENGTH = 40;
+    private int MAX_LENGTH = 120;
     BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
