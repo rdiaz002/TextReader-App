@@ -15,6 +15,7 @@ import android.provider.Telephony;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.telephony.SmsMessage;
+import android.widget.Toast;
 
 import java.util.Locale;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -67,6 +68,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
                 HEADSET_PRESENT = true;
             }
         }
+        Toast.makeText(this, "TextReader is " + (HEADSET_PRESENT ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
     }
 
     @Override
