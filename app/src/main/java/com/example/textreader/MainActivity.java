@@ -1,7 +1,9 @@
 package com.example.textreader;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +14,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     private Intent serv;
     private SharedPreferences preference;
-
+    private String[] permissions = {Manifest.permission.BLUETOOTH, Manifest.permission.READ_CONTACTS, Manifest.permission.RECEIVE_SMS};
+    private int MY_PERMISSIONS_REQUEST = 100;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +29,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         preference = PreferenceManager.getDefaultSharedPreferences(this);
         updatePreferences();
         preference.registerOnSharedPreferenceChangeListener(this);
+
+        //Permissions Check
+        if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_DENIED ||
+                checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_DENIED ||
+                checkSelfPermission(Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_DENIED) {
+            requestPermissions(permissions, MY_PERMISSIONS_REQUEST);
+        }
+
     }
 
     private void updatePreferences() {
