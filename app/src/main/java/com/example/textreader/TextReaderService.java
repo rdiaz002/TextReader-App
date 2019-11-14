@@ -1,6 +1,10 @@
 package com.example.textreader;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,9 +51,10 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
                     mTextToSpeech.speak(name + " replied " + msg, TextToSpeech.QUEUE_ADD, null, name);
                 }
 
-            } else if (intent.getAction().compareTo(AudioManager.ACTION_HEADSET_PLUG) == 0) {
-                checkForHeadPhones();
+            } else if (intent.getAction().compareTo(AudioManager.ACTION_HEADSET_PLUG) == 0 || intent.getAction().compareTo(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED) == 0) {
+                checkForHeadPhones(intent);
             }
+
 
 
         }
@@ -60,15 +65,41 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
 
     }
 
-    private void checkForHeadPhones() {
+    private boolean checkForHeadSet() {
         AudioDeviceInfo[] list = ((AudioManager) getSystemService(AUDIO_SERVICE)).getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-        HEADSET_PRESENT = false;
         for (AudioDeviceInfo i : list) {
-            if ((i.getType() == 3 || i.getType() == 4 || i.getType() == 22) && i.isSink()) {
-                HEADSET_PRESENT = true;
+            if ((i.getType() == 3 || i.getType() == 4 || i.getType() == 22) && i.isSink()) { //Looks for wired headset/headphones and usb Headset.
+                return true;
             }
         }
-        Toast.makeText(this, "TextReader is " + (HEADSET_PRESENT ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    private boolean checkForBluetooth() {
+        BluetoothAdapter adapter = ((BluetoothManager) getSystemService(BLUETOOTH_SERVICE)).getAdapter();
+        return adapter.getProfileConnectionState(BluetoothProfile.HEADSET) == 2;
+    }
+
+    private void checkForHeadPhones(Intent intent) {
+        boolean check = false;
+        int plugCheck = intent.getIntExtra("state", -1);
+        int wirelessCheck = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+
+        if (plugCheck > 0 || wirelessCheck > 1) { //if any of these devices are present then TextReader should activate.
+            check = true;
+        } else if (plugCheck == 0) { //if headset is unplugged then check for bluetooth headset device.
+            check = checkForBluetooth();
+        } else if (wirelessCheck == 0) { // if bluetooth headset is disconnected then check for headset.
+            check = checkForHeadSet();
+        } else { //if the intent extras are not available or intent is empty then check for both.
+            check |= checkForHeadSet();
+            check |= checkForBluetooth();
+        }
+
+        if (HEADSET_PRESENT != check) {
+            Toast.makeText(this, "TextReader is " + (check ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
+            HEADSET_PRESENT = check;
+        }
     }
 
     @Override
@@ -83,7 +114,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         utteranceQueue = new ConcurrentLinkedQueue<String>();
         mTextToSpeech = new TextToSpeech(getApplicationContext(),this);
         mTextToSpeech.setOnUtteranceProgressListener(new UtteranceListener());
-        checkForHeadPhones();
+        checkForHeadPhones(new Intent()); //HEADSET_PRESENT initialization.
     }
 
     @Override
@@ -92,6 +123,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         IntentFilter filter = new IntentFilter();
         filter.addAction(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
         filter.addAction(AudioManager.ACTION_HEADSET_PLUG);
+        filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(mReceiver,filter);
         TEXTREADER_ACTIVE = true;
         return START_STICKY;
