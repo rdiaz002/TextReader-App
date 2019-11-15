@@ -14,15 +14,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     private Intent serv;
     private SharedPreferences preference;
+    private TextReaderPreferences prefFrag;
     private String[] permissions = {Manifest.permission.BLUETOOTH, Manifest.permission.READ_CONTACTS, Manifest.permission.RECEIVE_SMS};
     private int MY_PERMISSIONS_REQUEST = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+        prefFrag = new TextReaderPreferences();
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, new TextReaderPreferences())
+                    .replace(R.id.container, prefFrag)
                     .commitNow();
         }
         serv = new Intent(this, TextReaderService.class);
@@ -57,11 +60,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        switch (s) {
+            case "ACTIVATE_READER":
+                if (sharedPreferences.getBoolean(s, false)) {
+                    startService(serv);
+                } else {
+                    stopService(serv);
+                }
+                break;
+            case "HEADPHONE_CHECK":
+                TextReaderService.setHeadsetCheck(!sharedPreferences.getBoolean(s, false));
+                break;
 
-        if (sharedPreferences.getBoolean(s, false)) {
-            startService(serv);
-        } else {
-            stopService(serv);
         }
     }
 }

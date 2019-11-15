@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreference
-        android:title="Enable Text Message Reader"
-        android:summary=""
-        android:key="ACTIVATE_READER"
         android:defaultValue="false"
         android:enabled="true"
-        />
-
-
-
-
+        android:key="ACTIVATE_READER"
+        android:summary=""
+        android:title="Enable Text Message Reader" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:enabled="true"
+        android:key="HEADPHONE_CHECK"
+        android:summary="Allows TextReader to read out aloud all incoming messages"
+        android:title="Disable Headphone check" />
 
 
 </PreferenceScreen>
