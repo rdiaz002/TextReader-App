@@ -11,6 +11,7 @@
         android:enabled="true"
         android:key="HEADPHONE_CHECK"
         android:summary="Allows TextReader to read out aloud all incoming messages"
+        android:dependency="ACTIVATE_READER"
         android:title="Disable Headphone check" />
 
 

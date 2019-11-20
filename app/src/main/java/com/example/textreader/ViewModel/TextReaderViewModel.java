@@ -4,13 +4,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 public class TextReaderViewModel extends ViewModel {
-    private MutableLiveData<Boolean> serviceState;
-    private MutableLiveData<Boolean> headPhoneCheck;
+    private MutableLiveData<Boolean> serviceState = new MutableLiveData<>();
+    private MutableLiveData<Boolean> headPhoneCheck = new MutableLiveData<>();
 
     public MutableLiveData<Boolean> getServiceState() {
-        if (serviceState == null) {
-            serviceState = new MutableLiveData<>();
-        }
         return serviceState;
     }
 

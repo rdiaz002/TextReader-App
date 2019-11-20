@@ -21,12 +21,14 @@ import android.speech.tts.UtteranceProgressListener;
 import android.telephony.SmsMessage;
 import android.widget.Toast;
 
+import androidx.preference.PreferenceManager;
+
 import java.util.Locale;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TextReaderService extends Service implements TextToSpeech.OnInitListener {
 
-    static boolean HEADSET_CHECK = true;
+    private static boolean HEADSET_CHECK = true;
     private static boolean TEXTREADER_ACTIVE = false;
     private TextToSpeech mTextToSpeech;
     private ConcurrentLinkedQueue<String> utteranceQueue;
@@ -52,7 +54,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
                     mTextToSpeech.speak(name + " replied " + msg, TextToSpeech.QUEUE_ADD, null, name);
                 }
 
-            } else if (intent.getAction().compareTo(AudioManager.ACTION_HEADSET_PLUG) == 0 || intent.getAction().compareTo(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED) == 0) {
+            } else if (HEADSET_CHECK && (intent.getAction().compareTo(AudioManager.ACTION_HEADSET_PLUG) == 0 || intent.getAction().compareTo(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED) == 0)) {
                 checkForHeadPhones(intent);
             }
 
@@ -69,7 +71,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
     }
 
     public static void setHeadsetCheck(boolean headsetCheck) {
-        HEADSET_CHECK = headsetCheck;
+        HEADSET_CHECK = !headsetCheck;
     }
 
     private boolean checkForHeadSet() {
@@ -89,7 +91,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
 
     private void checkForHeadPhones(Intent intent) {
 
-        boolean check;
+        boolean check = false;
         if (HEADSET_CHECK) {
             int plugCheck = intent.getIntExtra("state", -1);
             int wirelessCheck = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
@@ -119,6 +121,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         return null;
     }
 
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -126,6 +129,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         mTextToSpeech = new TextToSpeech(getApplicationContext(), this);
         mTextToSpeech.setOnUtteranceProgressListener(new UtteranceListener());
         checkForHeadPhones(new Intent()); //HEADSET_PRESENT initialization.
+
     }
 
     @Override
@@ -137,6 +141,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(mReceiver, filter);
         TEXTREADER_ACTIVE = true;
+        HEADSET_CHECK = !PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("HEADPHONE_CHECK", true);
         return START_STICKY;
 
     }
@@ -179,7 +184,7 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
         return contactName;
     }
 
-    public class UtteranceListener extends UtteranceProgressListener {
+    private class UtteranceListener extends UtteranceProgressListener {
 
         @Override
         public void onStart(String s) {
