@@ -86,12 +86,12 @@ public class TextReaderService extends Service implements TextToSpeech.OnInitLis
 
     private boolean checkForBluetooth() {
         BluetoothAdapter adapter = ((BluetoothManager) getSystemService(BLUETOOTH_SERVICE)).getAdapter();
-        return adapter.getProfileConnectionState(BluetoothProfile.HEADSET) == 2;
+        return (adapter != null) && adapter.getProfileConnectionState(BluetoothProfile.HEADSET) == 2;
     }
 
     private void checkForHeadPhones(Intent intent) {
 
-        boolean check = false;
+        boolean check;
         if (HEADSET_CHECK) {
             int plugCheck = intent.getIntExtra("state", -1);
             int wirelessCheck = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
