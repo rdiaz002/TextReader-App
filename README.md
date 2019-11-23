@@ -9,4 +9,4 @@ A service that uses TextToSpeech to read your text messages.
 **NOTE: Work In Progess.** 
 **Any bugs or suggestions for features can be added to the issues tab in this repository.**
 
-![alt text](https://github.com/rdiaz002/TextReader-App/Images/TextReader_Img)
+![alt text](https://github.com/rdiaz002/TextReader-App/blob/master/Images/TextReader_Img.png)
