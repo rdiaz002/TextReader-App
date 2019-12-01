@@ -35,10 +35,11 @@ public class MainActivity extends AppCompatActivity {
         preference.registerOnSharedPreferenceChangeListener(prefFrag);
 
         //Permissions Check
-        if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_DENIED ||
-                checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_DENIED ||
-                checkSelfPermission(Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_DENIED) {
-            requestPermissions(permissions, MY_PERMISSIONS_REQUEST);
+        for (String i : permissions) {
+            if (checkSelfPermission(i) == PackageManager.PERMISSION_DENIED) {
+                requestPermissions(permissions, MY_PERMISSIONS_REQUEST);
+                break;
+            }
         }
 
     }
